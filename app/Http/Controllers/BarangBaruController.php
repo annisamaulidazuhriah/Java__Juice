@@ -4,52 +4,81 @@ namespace App\Http\Controllers;
 
 use App\Models\Barang;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class BarangBaruController extends Controller
 {
-    public function index()
-    {
+    // Menampilkan semua data barang
+    public function index() {
+        // Mengambil semua data barang dari model Barang
         $barangs = Barang::all();
-        return view('barang.index', compact('barangs'));
+
+        // Mengirim data ke view welcome.blade.php dengan compact
+        return view('welcome', compact('barangs'));
     }
 
-    public function create()
-    {
-        return view('barang.create');
-    }
-
+    // Menyimpan barang baru dengan validasi
     public function store(Request $request)
     {
-        $request->validate([
-            'nama_barang' => 'required',
+        // Validasi input
+        $validator = Validator::make($request->all(), [
+            'nama_barang' => 'required|string|max:255',
             'stok_barang' => 'required|integer',
-            'jenis_barang' => 'required',
+            'jenis_barang' => 'required|string|max:255',
         ]);
 
-        Barang::create($request->all());
-        return redirect()->route('barang.index')->with('success', 'Barang berhasil ditambahkan');
+        // Jika validasi gagal, kembalikan pesan error
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // Menyimpan data barang baru
+        $barang = Barang::create($request->all());
+
+        // Redirect kembali ke halaman utama dengan pesan sukses
+        return redirect()->route('barangs.index')->with('success', 'Barang berhasil ditambahkan!');
     }
 
-    public function edit(Barang $barang)
+    // Menampilkan satu barang berdasarkan id
+    public function show($id)
     {
-        return view('barang.edit', compact('barang'));
+        // Mengambil data barang berdasarkan id, jika tidak ditemukan tampilkan error 404
+        $barang = Barang::findOrFail($id);
+
+        return view('barang.show', compact('barang'));
     }
 
-    public function update(Request $request, Barang $barang)
+    // Mengupdate barang berdasarkan id dengan validasi
+    public function update(Request $request, $id)
     {
-        $request->validate([
-            'nama_barang' => 'required',
+        // Validasi input
+        $validator = Validator::make($request->all(), [
+            'nama_barang' => 'required|string|max:255',
             'stok_barang' => 'required|integer',
-            'jenis_barang' => 'required',
+            'jenis_barang' => 'required|string|max:255',
         ]);
 
+        // Jika validasi gagal, kembalikan pesan error
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // Mengupdate data barang
+        $barang = Barang::findOrFail($id);
         $barang->update($request->all());
-        return redirect()->route('barang.index')->with('success', 'Barang berhasil diperbarui');
+
+        // Redirect kembali ke halaman utama dengan pesan sukses
+        return redirect()->route('barangs.index')->with('success', 'Barang berhasil diupdate!');
     }
 
-    public function destroy(Barang $barang)
+    // Menghapus barang berdasarkan id
+    public function destroy($id)
     {
+        // Menghapus data barang berdasarkan id
+        $barang = Barang::findOrFail($id);
         $barang->delete();
-        return redirect()->route('barang.index')->with('success', 'Barang berhasil dihapus');
+
+        // Redirect kembali ke halaman utama dengan pesan sukses
+        return redirect()->route('barangs.index')->with('success', 'Barang berhasil dihapus!');
     }
 }
